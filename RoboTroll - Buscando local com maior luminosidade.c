@@ -1,24 +1,31 @@
+//Portas Digitais
 #define MOTOR_DC_FRENTE 5
 #define MOTOR_DC_TRAS 6
 #define MOTOR_DC_ESQUERDA 10
 #define MOTOR_DC_DIREITA 11
-
-#define SENSOR_FRENTE 0
-#define SENSOR_TRAS 2
-#define SENSOR_ESQUERDA 1
-#define SENSOR_DIREITA 3
-#define SENSOR_SERVO_DIREITA 5
-#define SENSOR_SERVO_ESQUERDA 4
 
 #define LED_PISCA_DIREITA 12
 #define LED_PISCA_ESQUERDA 13
 #define LED_FREIO_ESQUERDA 3
 #define LED_FREIO_DIREITA 2
 
+//Portas Analogicas
+#define SENSOR_FRENTE 0
+#define SENSOR_TRAS 2
+#define SENSOR_ESQUERDA 1
+#define SENSOR_DIREITA 3
+#define SENSOR_SERVO 4
+
+//Constantes
+#define SERVO_MEIO 70
+#define SERVO_DIREITA 20
+#define SERVO_ESQUERDA 150
+
+//Variaveis
 int counterSensorPrint = 0;
 int counterPisca = 0;
-int alinharVolanteMeio = 1;
 char volante = 'm';
+bool alinhar = true;
 
 void setup(){	
   	Serial.begin(9600);
@@ -28,49 +35,51 @@ void setup(){
     pinMode(LED_FREIO_ESQUERDA,OUTPUT);
 }
 
-void loop()
-{
-	if(alinharVolante == 1){
-		alinharVolante();
-		alinharVolanteMeio = 0;
+void loop() {
+	//alinhar o volante no meio toda vez que é iniciado o arduino
+	if(alinhar){
+		alinharVolante();	
+		alinhar = false;		
 	}
 
-	alinharVolante();	
-	impressaoValoresSensores();
-	//buscarMenorLuminosidade();
-	
-
-	delay(10);
-}
-
-void alinharVolante() {
-	int intensidadeServoEsquerda = analogRead(SENSOR_SERVO_ESQUERDA);
-	int intensidadeServoDireita = analogRead(SENSOR_SERVO_DIREITA);
-	if(intensidadeServoDireita > 300) {
-		while(intensidadeServoDireita > 300) {
-			analogWrite(MOTOR_DC_DIREITA, 200);
-			analogWrite(MOTOR_DC_DIREITA, 0);
-			intensidadeServoDireita = analogRead(SENSOR_SERVO_DIREITA);
-		}
-	}
-	else if(intensidadeServoDireita < 295) {
-		while(intensidadeServoDireita < 295) {
-			analogWrite(MOTOR_DC_ESQUERDA, 200);
-			analogWrite(MOTOR_DC_ESQUERDA, 0);
-			intensidadeServoDireita = analogRead(SENSOR_SERVO_DIREITA);
-		}
-	}
-
-}
-
-void impressaoValoresSensores() {
-
+	//leitura dos sensores
 	int intensidadeFrente = analogRead(SENSOR_FRENTE);
  	int intensidadeTRAS = analogRead(SENSOR_TRAS);
 	int intensidadeEsquerda = analogRead(SENSOR_ESQUERDA);
 	int intensidadeDireita = analogRead(SENSOR_DIREITA);
-	int intensidadeServoEsquerda = analogRead(SENSOR_SERVO_ESQUERDA);
-	int intensidadeServoDireita = analogRead(SENSOR_SERVO_DIREITA);
+	int intensidadeServo = analogRead(SENSOR_SERVO);
+
+
+
+	//chamada dos metodos
+	impressaoValoresSensores(intensidadeFrente, intensidadeTRAS, intensidadeEsquerda, intensidadeDireita, intensidadeServo);
+	buscarMenorLuminosidade(intensidadeFrente, intensidadeTRAS, intensidadeEsquerda, intensidadeDireita);
+	delay(10);
+}
+
+void alinharVolante() {
+	int intensidadeServo = analogRead(SENSOR_SERVO);
+	if(intensidadeServo > SERVO_MEIO + 5) {
+		while(intensidadeServo > SERVO_MEIO + 5) {
+			analogWrite(MOTOR_DC_DIREITA, 255);
+			delay(1);
+			analogWrite(MOTOR_DC_DIREITA, 0);
+			intensidadeServo = analogRead(SENSOR_SERVO);			
+		}
+	}
+	else if(intensidadeServo < SERVO_MEIO - 5) {
+		while(intensidadeServo < SERVO_MEIO - 5) {
+			analogWrite(MOTOR_DC_ESQUERDA, 255);
+			delay(1);
+			analogWrite(MOTOR_DC_ESQUERDA, 0);
+			intensidadeServo = analogRead(SENSOR_SERVO);			
+		}
+	}
+	
+	volante = 'm';
+}
+
+void impressaoValoresSensores(int intensidadeFrente, int intensidadeTRAS, int intensidadeEsquerda, int intensidadeDireita, int intensidadeServo) {
 
 	if(counterSensorPrint++ % 100 == 0) {
 		Serial.println("Intensidade do Sensor da Frente");
@@ -83,66 +92,52 @@ void impressaoValoresSensores() {
 		Serial.println(intensidadeEsquerda);
 		Serial.println("Posicao do Volante"); 
 		posicaoVolante(volante);
-		Serial.println("Intensidade do Sensor Servo DIREITA");
-		Serial.println(intensidadeServoDireita);
-		Serial.println("Intensidade do Sensor Servo ESQUERDA");
-		Serial.println(intensidadeServoEsquerda);
-		Serial.println("-------------------");
+		Serial.println("Intensidade do Sensor Servo");
+		Serial.println(intensidadeServo);
+		Serial.println("---------------------------------");
 	}
 }
 
-void buscarMenorLuminosidade() {
-
-	int intensidadeFrente = analogRead(SENSOR_FRENTE) + 390;
- 	int intensidadeTRAS = analogRead(SENSOR_TRAS) + 15;
-	int intensidadeEsquerda = analogRead(SENSOR_ESQUERDA);
-	int intensidadeDireita = analogRead(SENSOR_DIREITA) + 26;
-	
+void buscarMenorLuminosidade(int intensidadeFrente, int intensidadeTRAS, int intensidadeEsquerda, int intensidadeDireita) {
 
 	if(intensidadeFrente < intensidadeTRAS - 25){
 		if(intensidadeDireita < intensidadeEsquerda - 15) {
 			if(volante == 'e') 
-				alinharVolanteEsquerda();
+				alinharVolante();
 			if(volante == 'm')
 				virarDireita();
 			pisca('d');
 		}
 		else if(intensidadeEsquerda < intensidadeDireita - 15) {
 			if(volante == 'd') 
-				alinharVolanteDireita();
+				alinharVolante();
 			if(volante == 'm')
 				virarEsquerda();
 			pisca('e');
 		}
 		else {
-			if(volante == 'e')
-				alinharVolanteEsquerda();
-			if(volante == 'd')
-				alinharVolanteDireita();	
+			alinharVolante();
 			pararPiscas();		
 		}
 		andarFrente();
 	}
-	else if(intensidadeTRAS < intensidadeFrente - 5){
+	else if(intensidadeTRAS < intensidadeFrente - 25){
 		if(intensidadeDireita < intensidadeEsquerda - 15) {
 			if(volante == 'e') 
-				alinharVolanteEsquerda();
+				alinharVolante();
 			if(volante == 'm')
 				virarDireita();
 			pisca('d');
 		}
 		else if(intensidadeEsquerda < intensidadeDireita - 15) {
 			if(volante == 'd') 
-				alinharVolanteDireita();
+				alinharVolante();
 			if(volante == 'm')
 				virarEsquerda();
 			pisca('e');
 		}
 		else {
-			if(volante == 'e')
-				alinharVolanteEsquerda();
-			if(volante == 'd')
-				alinharVolanteDireita();
+			alinharVolante();
 			pararPiscas();
 		}
 	 	andarTRAS();
@@ -150,10 +145,7 @@ void buscarMenorLuminosidade() {
 	else {
 		pararTodosMotores();
         pararPiscas();
-      	if(volante == 'e')
-			alinharVolanteEsquerda();
-		if(volante == 'd')
-			alinharVolanteDireita();
+		alinharVolante();
 
 	}
 	
@@ -178,15 +170,25 @@ void posicaoVolante (char posicao) {
 }
 
 void virarEsquerda() {
-  	virar(MOTOR_DC_ESQUERDA, 500);
+	int intensidadeServo = analogRead(SENSOR_SERVO);
+	while(intensidadeServo < SERVO_ESQUERDA) {
+		analogWrite(MOTOR_DC_ESQUERDA, 255);
+		delay(1);
+		analogWrite(MOTOR_DC_ESQUERDA, 0);
+		intensidadeServo = analogRead(SENSOR_SERVO);		
+	}
 	volante = 'e';
- 	parar(MOTOR_DC_ESQUERDA);
 }
 
 void virarDireita() {
-  	virar(MOTOR_DC_DIREITA, 500);  
+  	int intensidadeServo = analogRead(SENSOR_SERVO);
+	while(intensidadeServo > SERVO_DIREITA) {
+		analogWrite(MOTOR_DC_DIREITA, 255);
+		delay(1);
+		analogWrite(MOTOR_DC_DIREITA, 0);
+		intensidadeServo = analogRead(SENSOR_SERVO);
+	}
 	volante = 'd';
-	parar(MOTOR_DC_DIREITA);
 }
 
 void pisca(char lado) {
@@ -215,18 +217,6 @@ void pararPiscas() {
 	digitalWrite(LED_PISCA_DIREITA, LOW);	
 }
 
-void alinharVolanteEsquerda () {
-	virar(MOTOR_DC_DIREITA, 500);
-	volante = 'm';	
-	parar(MOTOR_DC_DIREITA);
-}
-
-void alinharVolanteDireita () {
-	virar(MOTOR_DC_ESQUERDA, 500);	
-	volante = 'm';	
- 	parar(MOTOR_DC_ESQUERDA);
-}
-
 void andarFrente() { 
 	desligarLuzFreio();
 	parar(MOTOR_DC_TRAS);
@@ -238,12 +228,6 @@ void andarTRAS() {
 	parar(MOTOR_DC_FRENTE);
 	analogWrite(MOTOR_DC_TRAS,200);
 }
-
-void virar(int motor, int tempo) {
-  analogWrite(motor,200);
-  delay(tempo);
-  parar(motor);
-}  
 
 void ligarLuzFreio() {
 	digitalWrite(LED_FREIO_DIREITA, HIGH);
