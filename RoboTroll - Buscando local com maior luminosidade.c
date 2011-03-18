@@ -42,8 +42,9 @@ void loop() {
 		alinhar = false;		
 	}
 	//leitura dos sensores
-	int intensidadeFrente = analogRead(SENSOR_FRENTE) - 215;
- 	int intensidadeTRAS = analogRead(SENSOR_TRAS)- 540;
+	int intensidadeFrente = analogRead(SENSOR_FRENTE) - 110;
+	intensidadeFrente = intensidadeFrente - (intensidadeFrente*0.57);
+ 	int intensidadeTRAS = analogRead(SENSOR_TRAS)- 640;
 	int intensidadeEsquerda = analogRead(SENSOR_ESQUERDA) - 280;
 	int intensidadeDireita = analogRead(SENSOR_DIREITA) - 280;
 	int intensidadeServo = analogRead(SENSOR_SERVO);
