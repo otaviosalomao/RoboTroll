@@ -17,9 +17,9 @@
 #define SENSOR_SERVO 4
 
 //Constantes
-#define SERVO_MEIO 70
-#define SERVO_DIREITA 20
-#define SERVO_ESQUERDA 150
+#define SERVO_MEIO 365
+#define SERVO_DIREITA 330
+#define SERVO_ESQUERDA 400
 
 //Variaveis
 int counterSensorPrint = 0;
@@ -41,15 +41,12 @@ void loop() {
 		alinharVolante();	
 		alinhar = false;		
 	}
-
 	//leitura dos sensores
-	int intensidadeFrente = analogRead(SENSOR_FRENTE);
- 	int intensidadeTRAS = analogRead(SENSOR_TRAS);
-	int intensidadeEsquerda = analogRead(SENSOR_ESQUERDA);
-	int intensidadeDireita = analogRead(SENSOR_DIREITA);
+	int intensidadeFrente = analogRead(SENSOR_FRENTE) - 215;
+ 	int intensidadeTRAS = analogRead(SENSOR_TRAS)- 540;
+	int intensidadeEsquerda = analogRead(SENSOR_ESQUERDA) - 280;
+	int intensidadeDireita = analogRead(SENSOR_DIREITA) - 280;
 	int intensidadeServo = analogRead(SENSOR_SERVO);
-
-
 
 	//chamada dos metodos
 	impressaoValoresSensores(intensidadeFrente, intensidadeTRAS, intensidadeEsquerda, intensidadeDireita, intensidadeServo);
@@ -59,16 +56,16 @@ void loop() {
 
 void alinharVolante() {
 	int intensidadeServo = analogRead(SENSOR_SERVO);
-	if(intensidadeServo > SERVO_MEIO + 5) {
-		while(intensidadeServo > SERVO_MEIO + 5) {
+	if(intensidadeServo > SERVO_MEIO + 2) {
+		while(intensidadeServo > SERVO_MEIO + 2) {
 			analogWrite(MOTOR_DC_DIREITA, 255);
 			delay(1);
 			analogWrite(MOTOR_DC_DIREITA, 0);
 			intensidadeServo = analogRead(SENSOR_SERVO);			
 		}
 	}
-	else if(intensidadeServo < SERVO_MEIO - 5) {
-		while(intensidadeServo < SERVO_MEIO - 5) {
+	else if(intensidadeServo < SERVO_MEIO - 2) {
+		while(intensidadeServo < SERVO_MEIO - 2) {
 			analogWrite(MOTOR_DC_ESQUERDA, 255);
 			delay(1);
 			analogWrite(MOTOR_DC_ESQUERDA, 0);
